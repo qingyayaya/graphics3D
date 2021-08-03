@@ -133,40 +133,14 @@ ZShadowPosition::usage =
 "ZShadowPosition is an option for Shadow that determines whether the \
 projection of the graphic is in the positive or negative z direction.";
 
+ShadowColor::usage = 
+"ShadowColor"
+
 GeneralizedBarChart3D::usage =
 "GeneralizedBarChart3D[{{{xpos1, ypos1}, height1, {xwidth1, ywidth1}}, \
 {{xpos2, ypos2}, height2, {xwidth2, ywidth2}}, ...}] generates a  \
 three-dimensional bar graph with the solid bars at the given positions, heights, \
 and widths."
-
-(* The XSpacing and YSpacing options control the space between bars in the
-X and Y directions respectively.  SolidBarEdges and SolidBarEdgeStyle are
-options determining the style of the edges of the cuboids making up the bars
-of the bar chart.  SolidBarStyle is a style for the faces of the cuboids.
-The odd naming convention is to avoid shadowing similar options in Graphics.m.
-BarChart3D also accepts all options valid for Graphics3D. *)
-
-XSpacing::usage =
-"XSpacing is an option for BarChart3D, which determines the amount of space \
-between bars in the x direction.  XSpacing may be set to any real number \
-between 0 and 1.";
-
-YSpacing::usage =
-"YSpacing is an option for BarChart3D, which determines the amount of space \
-between bars in the Y direction.  YSpacing may be set to any real number \
-between 0 and 1.";
-
-SolidBarEdges::usage =
-"SolidBarEdges is an option for BarChart3D, which determines whether the edges \
-of the bars are drawn.";
-
-SolidBarEdgeStyle::usage =
-"SolidBarEdgeStyle is an option for BarChart3D, which determines the style of \
-the edges of the bars.";
-
-SolidBarStyle::usage = 
-"SolidBarStyle is an option for BarChart3D, which determines the style of the \
-faces of the bars.";
 
 StackGraphics::usage =
 "StackGraphics[{g1, g2, ...}] generates a Graphics3D object corresponding to a \
@@ -186,6 +160,8 @@ a three-dimensional graphic image.";
 
 
 Begin["`Private`"]
+
+Clear@Shadow
 
 If[$VersionNumber>=9,Graphics`Graphics3D`Private`FilterOptions[a_,b___]:=Sequence@@FilterRules[{b},Options[a]]];
 
@@ -395,7 +371,7 @@ tg3D[HoldPattern[GraphicsComplex][pts_, prims_, o___], f_, p_:0] :=
     GraphicsComplex[If[VectorQ[pts], pts, Map[f, pts]],
          tg3D[prims, f, Length[pts]]]
 
-tg3D[Point[d], f_, p_:0]/;(p === 0 || !gcq[d, p]) := Point[f[d]]
+tg3D[Point[d_], f_, p_:0]/;(p === 0 || !gcq[d, p]) := Point[f/@d]
 
 tg3D[Line[d_List], f_, p_:0]/;(p === 0 || !gcq[d, p]) :=
     Line[Map[f, d, If[MatrixQ[d[[1]]], {2},{1}]]]
@@ -403,77 +379,13 @@ tg3D[Line[d_List], f_, p_:0]/;(p === 0 || !gcq[d, p]) :=
 tg3D[Polygon[d_List], f_, p_:0]/;(p === 0 || !gcq[d, p]) :=
     Polygon[Map[f, d, If[MatrixQ[d[[1]]], {2},{1}]]]
 
-tg3D[Cylinder[d:{{_,_,_},{_,_,_}}, r_:1, t___], f_, p_:0]/;numberQ[r] :=
-    Cylinder[f /@ d, r, t]
-
-tg3D[Sphere[d_List, r_:1, t___], f_, p_:0]/;numberQ[r] :=
-        Sphere[f[d], r, t] 
-
-tg3D[Text[expr_, d_List, opts___], f_, p_:0] := Text[expr, f[d], opts]
-
 tg3D[c:Cuboid[{_,_,_}], f_, p_:0] :=
     tg3D[cuboidtopolygons[c], f, p]
-    
+
 tg3D[c:Cuboid[{_,_,_}, {_,_,_}], f_, p_:0] :=
     tg3D[cuboidtopolygons[c], f, p]
 
 tg3D[expr_, f_, p_:0] := expr
-
-(* transform an entire primitive, not just coordinates. This may be being too clever
-    than necessary... In this case, the transform function needs to have specific
-    knowledge of multipoints, multilines, etc. and of what to do inside a
-    GraphicsComplex; if the f is being applied inside a GC, it will be given
-    two arguments (obj and pointlist), and there will be two variables (newpoints
-    and newcount) that the transform function can depend upon. The transform
-    function must do the work of incrementing the counter, and adding rules
-    of the form pthead[count] -> coord to newpoints. (Clearly less than ideal,
-    this needs to be thought about and improved.) Also note global (in this context)
-    symbol pthead used as a wrapper for new coordinates. *)
-tg3Ds[HoldPattern[Graphics3D][g_, o___], f_, p_:0] := Graphics3D[tg3Ds[g, f, p], o]
-
-tg3Ds[d_List, f_, p_:0] := Map[ tg3Ds[#, f, p]& , d ]
-
-tg3Ds[GraphicsGroup[a_, b___], f_, p_:0] := GraphicsGroup[tg3Ds[a, f, p], b]
-
-tg3Ds[HoldPattern[GraphicsComplex][pts_, prims_, o___], f_, p_:0] :=
- Module[{tg, allpoints = pts, tmppoints},
-    Block[{newpoints = {}, newcount = 0},
-       tg = tg3Ds[prims, f, If[VectorQ[pts] && p =!= 0, p[[pts]], pts]];
-       tmppoints = newpoints;
-       If[newpoints != {},
-           tg = tg/.newpoints;
-           allpts = allpts ~Join~ (Last /@ newpoints)
-       ]
-    ];
-    If[VectorQ[pts] && p =!= 0,
-        tmppoints = Map[(newcount++; pthead[newcount] -> Last[#])&, tmppoints];
-        newpoints = newpoints ~Join~ tmppoints;
-        allpoints = pts ~Join~ (First /@ tmppoints),
-      (* else *)
-        allpoints = pts ~Join~ (Last /@ tmppoints)
-    ];
-    GraphicsComplex[allpoints, tg]
-]
-
-tg3Ds[Point[d], f_, p_:0]/;(p === 0 || !gcq[d, p]) := f[Point[d]]
-
-tg3Ds[Line[d_List], f_, p_:0]/;(p === 0 || !gcq[d, p]) := f[Line[d]]
-
-tg3Ds[Polygon[d_List], f_, p_:0]/;(p === 0 || !gcq[d, p]) := f[Polygon[d]]
-
-tg3Ds[c:Cylinder[d:{{_,_,_},{_,_,_}}, r_:1, t___], f_, p_:0]/;numberQ[r] := f[c]
-
-tg3Ds[s:Sphere[d_List, r_:1, t___], f_, p_:0]/;numberQ[r] := f[s]
-
-tg3Ds[t:Text[expr_, d_List, opts___], f_, p_:0] := f[t]
-
-tg3Ds[c:Cuboid[{_,_,_}], f_, p_:0] := f[c]
-    
-tg3Ds[c:Cuboid[{_,_,_}, {_,_,_}], f_, p_:0] := f[c]
-
-tg3Ds[expr_, f_, 0] := expr
-
-tg3Ds[expr_, f_, pts_List] := f[expr, pts]
 
 (* gcq tests for compliance with a GraphicsComplex indexed primitive *)
 gcq[_Integer] := True
@@ -520,28 +432,30 @@ Project[g_, basis:{{_,_,_},{_,_,_}}, location:{_,_,_},
 Options[Shadow] = 
 	Join[{XShadow -> True, YShadow -> True, ZShadow -> True,
 	XShadowPosition -> -1, YShadowPosition -> 1,
-	ZShadowPosition -> -1}, Developer`Graphics3DOptions[]];
+	ZShadowPosition -> -1, ShadowColor -> RGBColor["#000000"]},
+	Developer`Graphics3DOptions[]];
 
-Shadow[g_Graphics3D, opts___] :=
+Shadow[g_, opts___] :=
 	(issueObsoleteFunMessage[Shadow,"Graphics`Graphics3D`"];
 	Module[{xmin, xmax, ymin, ymax, zmin, zmax, xshadow, 
 			yshadow, zshadow, xshadowposition, 
-			yshadowposition, zshadowposition,
+			yshadowposition, zshadowposition, shadowcolor, 
 			image,br},
 		{xshadow, yshadow, zshadow, xshadowposition, 
-			yshadowposition, zshadowposition} = 
+			yshadowposition, zshadowposition, shadowcolor} = 
 			{XShadow, YShadow, ZShadow, XShadowPosition,
-			 YShadowPosition, ZShadowPosition} /. {opts} /.
+			 YShadowPosition, ZShadowPosition, ShadowColor} /. {opts} /.
 			 	Options[Shadow];
 		gopts = FilterOptions[Graphics3D, opts,
 				Sequence @@ Options[Shadow]];
+	    graph = Graphics3D[g];
 		{xmin, xmax, ymin, ymax, zmin, zmax} = 
-			Flatten[PlotRange[g]];
-		br = FullOptions[g,BoxRatios];
-		image = {g};
+			Flatten[PlotRange[graph]];
+		br = FullOptions[graph,BoxRatios];
+		image = {graph};
 		If[xshadow, 
 			AppendTo[image,
-				Project[g,
+				Project[Show[Graphics3D[{shadowcolor,Opacity[0.1],g}]],
 					{(xmax+xmin)/2 + xshadowposition (xmax - xmin),
 						(ymax+ymin)/2,
 						(zmax+zmin)/2}]];
@@ -549,7 +463,7 @@ Shadow[g_Graphics3D, opts___] :=
 				br = br {(Abs[xshadowposition] + 1/2),1,1}]];
 		If[yshadow, 
 			AppendTo[image,
-				Project[g,
+				Project[Graphics3D[{shadowcolor,Opacity[0.1],g}],
 					{(xmax+xmin)/2,
 					(ymax+ymin)/2 + yshadowposition (ymax - ymin),
 					(zmax+zmin)/2}]];
@@ -557,15 +471,15 @@ Shadow[g_Graphics3D, opts___] :=
 				br = br {1, (Abs[yshadowposition] + 1/2),1}]];
 		If[zshadow, 
 			AppendTo[image,
-				Project[g,
+				Project[Graphics3D[{shadowcolor,Opacity[0.1],g}],
 					{(xmax+xmin)/2,
 					(ymax+ymin)/2,
 					(zmax+zmin)/2 + zshadowposition (zmax - zmin)}]];
 			If[Abs[zshadowposition] > 1/2,
-				br = br {1,1, (Abs[zshadowposition] + 1/2)}]];
-		Show[image,Flatten[{gopts,BoxRatios->br}]]])
+				br = br {1, 1, (Abs[zshadowposition] + 1/2)}]];
+		Show[image,Flatten[{gopts,BoxRatios->br,PlotRange->All}]]])
 
-Shadow[g_,opts___] := Shadow[Graphics3D[g],opts] (* handle other graphics *)
+Shadow[Graphics3D[g_,others___],opts___] := Shadow[g,opts]
 
 (* Graphics3D *)
 Unprotect[Graphics3D];
