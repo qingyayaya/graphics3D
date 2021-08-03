@@ -133,9 +133,6 @@ ZShadowPosition::usage =
 "ZShadowPosition is an option for Shadow that determines whether the \
 projection of the graphic is in the positive or negative z direction.";
 
-ShadowColor::usage = 
-"ShadowColor"
-
 GeneralizedBarChart3D::usage =
 "GeneralizedBarChart3D[{{{xpos1, ypos1}, height1, {xwidth1, ywidth1}}, \
 {{xpos2, ypos2}, height2, {xwidth2, ywidth2}}, ...}] generates a  \
@@ -432,19 +429,19 @@ Project[g_, basis:{{_,_,_},{_,_,_}}, location:{_,_,_},
 Options[Shadow] = 
 	Join[{XShadow -> True, YShadow -> True, ZShadow -> True,
 	XShadowPosition -> -1, YShadowPosition -> 1,
-	ZShadowPosition -> -1, ShadowColor -> RGBColor["#000000"]},
+	ZShadowPosition -> -1},
 	Developer`Graphics3DOptions[]];
 
 Shadow[g_, opts___] :=
 	(issueObsoleteFunMessage[Shadow,"Graphics`Graphics3D`"];
 	Module[{xmin, xmax, ymin, ymax, zmin, zmax, xshadow, 
 			yshadow, zshadow, xshadowposition, 
-			yshadowposition, zshadowposition, shadowcolor, 
+			yshadowposition, zshadowposition, 
 			image,br},
 		{xshadow, yshadow, zshadow, xshadowposition, 
-			yshadowposition, zshadowposition, shadowcolor} = 
+			yshadowposition, zshadowposition} = 
 			{XShadow, YShadow, ZShadow, XShadowPosition,
-			 YShadowPosition, ZShadowPosition, ShadowColor} /. {opts} /.
+			 YShadowPosition, ZShadowPosition} /. {opts} /.
 			 	Options[Shadow];
 		gopts = FilterOptions[Graphics3D, opts,
 				Sequence @@ Options[Shadow]];
@@ -455,7 +452,7 @@ Shadow[g_, opts___] :=
 		image = {graph};
 		If[xshadow, 
 			AppendTo[image,
-				Project[Show[Graphics3D[{shadowcolor,Opacity[0.1],g}]],
+				Project[Show[Graphics3D[{RGBColor["#000000"],Opacity[0.1],g}]],
 					{(xmax+xmin)/2 + xshadowposition (xmax - xmin),
 						(ymax+ymin)/2,
 						(zmax+zmin)/2}]];
@@ -463,7 +460,7 @@ Shadow[g_, opts___] :=
 				br = br {(Abs[xshadowposition] + 1/2),1,1}]];
 		If[yshadow, 
 			AppendTo[image,
-				Project[Graphics3D[{shadowcolor,Opacity[0.1],g}],
+				Project[Graphics3D[{RGBColor["#000000"],Opacity[0.1],g}],
 					{(xmax+xmin)/2,
 					(ymax+ymin)/2 + yshadowposition (ymax - ymin),
 					(zmax+zmin)/2}]];
@@ -471,7 +468,7 @@ Shadow[g_, opts___] :=
 				br = br {1, (Abs[yshadowposition] + 1/2),1}]];
 		If[zshadow, 
 			AppendTo[image,
-				Project[Graphics3D[{shadowcolor,Opacity[0.1],g}],
+				Project[Graphics3D[{RGBColor["#000000"],Opacity[0.1],g}],
 					{(xmax+xmin)/2,
 					(ymax+ymin)/2,
 					(zmax+zmin)/2 + zshadowposition (zmax - zmin)}]];
