@@ -1,8 +1,8 @@
 # ShadowFigure
 
-ShadowFigure是用来在Mathematica里画投影图的一个包，比如运行：
+ShadowFigure 是用来在 Mathematica 里画投影图的一个包，比如运行：
 
-```
+```mathematica
 ShadowFigure[ PolyhedronData["Spikey"] ]
 ```
 
@@ -12,19 +12,19 @@ ShadowFigure[ PolyhedronData["Spikey"] ]
 
 # Graphics3D
 
-修复后的Mathematica的Graphics$\grave{}$Graphics3D$\grave{}$ 包，修复后可以兼容高版本的Mathematica，但是并不推荐使用，最好使用ShadowFigure包。
+修复后的 Mathematica 的 Graphics\`Graphics3D\` 包，可以兼容高版本的 Mathematica，但是并不推荐使用，最好使用 ShadowFigure 包。
 
 # 使用方法
 
-对于ShadowFigure包，使用之前可以直接用下面的代码进行加载：
+对于 ShadowFigure 包，使用之前可以直接用下面的代码进行加载：
 
-```
-Get["https://gitee.com/qingyaya/graphics3D/raw/master/ShadowFigure.m"]
+```mathematica
+Get["https://github.com/qingyayaya/graphics3D/raw/master/ShadowFigure.m"]
 ```
 
-对于Graphics$\grave{}$Graphics3D$\grave{}$ 包，用下面的代码加载：
+对于 Graphics\`Graphics3D\` 包，用下面的代码加载：
 
-```
-Get["https://gitee.com/qingyaya/graphics3D/raw/master/Graphics3D.m"]
+```mathematica
+Get["https://github.com/qingyayaya/graphics3D/raw/master/Graphics3D.m"]
 ```
 
